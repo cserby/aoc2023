@@ -1,0 +1,19 @@
+{
+  "files.autoSave": "afterDelay",
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true,
+  "editor.tabSize": 2,
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "github.copilot.editor.enableAutoCompletions": false,
+  "github.copilot.enable": {
+    "*": "false"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "editor.guides.bracketPairs": true,
+  "jest.autoRun": {
+    "watch": false
+  },
+  "terminal.integrated.scrollback": 100000,
+}
