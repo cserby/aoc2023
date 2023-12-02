@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { gameParser, gamePossible, type Draw, part1 } from "../src/day2";
+import { gameParser, gamePossible, type Draw, part1, gamePower, part2 } from "../src/day2";
 
 const samplesStr = `Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
 Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
@@ -64,5 +64,19 @@ describe("Day2", () => {
         expect(part1(readFileSync("inputs/day2.txt", { encoding: "utf-8" }), colorLimit)).toEqual(2076);
       });
     });
+  });
+
+  describe("Part2", () => {
+    test("Sample1", () => {
+      expect(gamePower(gameParser(samples[0]))).toEqual(48);
+    });
+
+    test("Sample", () => {
+      expect(part2(samplesStr)).toEqual(2286);
+    });
+
+    test("Real", () => {
+      expect(part2(readFileSync("inputs/day2.txt", { encoding: "utf-8" }))).toEqual(70950);
+    })
   });
 });

@@ -60,3 +60,18 @@ export function part1(input: string, limits: Draw): number {
     .map((line) => gamePossible(gameParser(line), limits))
     .reduce((acc, curr) => (acc ?? 0) + (curr ?? 0), 0) ?? 0;
 }
+
+export function gamePower(game: Game): number {
+  const minRed = Math.max(...game.draws.map((d) => d.red));
+  const minGreen = Math.max(...game.draws.map((d) => d.green));
+  const minBlue = Math.max(...game.draws.map((d) => d.blue));
+
+  return minRed * minGreen * minBlue;
+}
+
+export function part2(input: string): number {
+  return input
+    .split("\n")
+    .map((line) => gamePower(gameParser(line)))
+    .reduce((acc, curr) => (acc) + (curr), 0)
+}
