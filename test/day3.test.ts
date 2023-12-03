@@ -1,4 +1,4 @@
-import { day3part1 } from "../src/day3";
+import { day3part1, day3part2 } from "../src/day3";
 import { readFileSync } from "fs";
 
 const sample = `467..114..
@@ -20,6 +20,16 @@ describe("Day3", () => {
 
     test("Real", () => {
       expect(day3part1(readFileSync("inputs/day3.txt", { encoding: "utf-8" }))).toEqual(529618);
-    })
+    });
   });
+
+  describe("Part2", () => {
+    test("Sample", () => {
+      expect(day3part2(sample)).toEqual(467835);
+    });
+
+    test("Real", () => {
+      expect(day3part2(readFileSync("inputs/day3.txt", { encoding: "utf-8" }))).toEqual(77509019);
+    });
+  })
 });

@@ -84,3 +84,82 @@ export function day3part1(input: string): number {
 
   return partNumbers.reduce((acc, curr) => acc + curr, 0);
 }
+
+export function readWhileNumber(from: string): string | undefined {
+  return from.match(/^[0-9]+/)?.[0];
+}
+
+export function strReverse(str: string | undefined): string | undefined {
+  if (str !== undefined) {
+    return [...str].reverse().join("");
+  } else {
+    return;
+  }
+}
+
+export function numbersAround(map: Map, lineNo: number, charNo: number): number[] {
+  const numbers = [] as Array<string | undefined>;
+
+  const numberLeft = strReverse(readWhileNumber(map[lineNo].slice(undefined, charNo).reverse().join("")));
+  const numberRight = readWhileNumber(map[lineNo].slice(charNo + 1).join(""));
+
+  numbers.push(numberLeft, numberRight);
+
+  if (lineNo > 0) {
+    const numberUpLeft = lineNo > 0 ? strReverse(readWhileNumber(map[lineNo - 1].slice(undefined, charNo).reverse().join(""))) : undefined;
+    const numberUpRight = lineNo > 0 ? readWhileNumber(map[lineNo - 1].slice(charNo + 1).join("")) : undefined;
+
+    if (asNumber(map[lineNo - 1][charNo]) !== undefined) {
+      numbers.push(`${numberUpLeft ?? ""}${map[lineNo - 1][charNo]}${numberUpRight ?? ""}`);
+    } else {
+      numbers.push(numberUpLeft, numberUpRight);
+    }
+  }
+
+  if (lineNo < map.length - 1) {
+    const numberDownLeft = lineNo <= map.length ? strReverse(readWhileNumber(map[lineNo + 1].slice(undefined, charNo).reverse().join(""))) : undefined;
+    const numberDownRight = lineNo <= map.length ? readWhileNumber(map[lineNo + 1].slice(charNo + 1).join("")) : undefined;
+
+    if (asNumber(map[lineNo + 1][charNo]) !== undefined) {
+      numbers.push(`${numberDownLeft ?? ""}${map[lineNo + 1][charNo]}${numberDownRight ?? ""}`);
+    } else {
+      numbers.push(numberDownLeft, numberDownRight);
+    }
+  } 
+
+  return numbers.filter((n) => n !== undefined).map((n) => parseInt(n!));
+}
+
+export function gearRatio(map: Map, lineNo: number, charNo: number): number | undefined {
+  const na = numbersAround(map, lineNo, charNo);
+
+  if (na.length === 2) {
+    return na[0] * na[1];
+  } else {
+    return;
+  }
+}
+
+export function findGearRatios(map: Map): number[] {
+  function findGearRatiosInLine(line: string[], lineNo: number): number[] {
+    return line.reduce((prevGearRatios, currChar, charNo) => {
+      if (currChar === '*') {
+        const gr = gearRatio(map, lineNo, charNo);
+        if (gr !== undefined) {
+          prevGearRatios.push(gr);
+        }
+      }
+      return prevGearRatios;
+    }, [] as number[]);
+  }
+
+  return map.flatMap((line, lineNo) => findGearRatiosInLine(line, lineNo));
+}
+
+export function day3part2(input: string): number {
+  const map = parseMap(input);
+
+  const gearRatios = findGearRatios(map);
+
+  return gearRatios.reduce((acc, curr) => acc + curr, 0);
+}
