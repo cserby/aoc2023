@@ -1,4 +1,4 @@
-import { day4part1, parseCard } from "../src/day4";
+import { day4part1, day4part2, parseCard } from "../src/day4";
 import { readFileSync } from "fs";
 
 const sample = `Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
@@ -24,6 +24,16 @@ describe("Day4", () => {
 
     test("Real", () => {
       expect(day4part1(readFileSync("inputs/day4.txt", { encoding: "utf-8" }))).toEqual(21919);
+    });
+  });
+
+  describe("Part2", () => {
+    test("Sample", () => {
+      expect(day4part2(sample)).toEqual(30);
+    });
+
+    test("Real", () => {
+      expect(day4part2(readFileSync("inputs/day4.txt", { encoding: "utf-8" }))).toEqual(9881048);
     });
   });
 });
