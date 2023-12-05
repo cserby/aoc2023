@@ -1,12 +1,12 @@
 export interface Range {
   start: number;
-  length: number;
+  end: number;
 }
 
 export interface MapRange {
   destinationStart: number;
   sourceStart: number;
-  rangeLength: number;
+  sourceEnd: number;
 }
 
 type Map = MapRange[];
@@ -32,7 +32,7 @@ function parseRange(line: string): MapRange {
   return {
     destinationStart: numbers[0],
     sourceStart: numbers[1],
-    rangeLength: numbers[2],
+    sourceEnd: numbers[1] + numbers[2] - 1,
   };
 }
 
@@ -63,17 +63,17 @@ export function parseInput(input: string): Almanac {
   } satisfies Almanac
 }
 
-function mapRange(input: number, range: MapRange): number | undefined {
-  if (range.sourceStart <= input && input <= range.sourceStart + range.rangeLength - 1) {
+function mapNumberRange(input: number, range: MapRange): number | undefined {
+  if (range.sourceStart <= input && input <= range.sourceEnd) {
     return range.destinationStart + (input - range.sourceStart);
   } else {
     return;
   }
 }
 
-function map(input: number, map: Map): number {
+function mapNumber(input: number, map: Map): number {
   return map.reduce((prevReturn, currRange) => {
-    const mapped = mapRange(input, currRange);
+    const mapped = mapNumberRange(input, currRange);
     if (mapped !== undefined) {
       return mapped;
     } else {
@@ -83,13 +83,13 @@ function map(input: number, map: Map): number {
 }
 
 function findSeedLocation(seed: number, almanac: Almanac): number {
-  return map(
-    map(
-      map(
-        map(
-          map(
-            map(
-              map(seed, almanac.seedToSoil), almanac.soilToFertilizer),
+  return mapNumber(
+    mapNumber(
+      mapNumber(
+        mapNumber(
+          mapNumber(
+            mapNumber(
+              mapNumber(seed, almanac.seedToSoil), almanac.soilToFertilizer),
               almanac.fertilizerToWater
           ), almanac.waterToLight
         ), almanac.lightToTemperature
@@ -108,61 +108,49 @@ function expandSeedRanges(seeds: number[]): Range[] {
   const ranges: Range[] = [];
 
   for (let i = 0; i < seeds.length; i += 2) {
-    ranges.push({ start: seeds[i], length: seeds[i + 1] });
+    ranges.push({ start: seeds[i], end: seeds[i] + seeds[i + 1] - 1 });
   }
 
   return ranges;
 }
 
-export function intersectAndMapRange(input: Range, mapRange: MapRange): [Range | undefined, Range, Range | undefined] | undefined {
-  const [inputFirst, inputLast] = [input.start, input.start + input.length - 1];
-  const [mapRangeFirst, mapRangeLast] = [mapRange.sourceStart, mapRange.sourceStart + mapRange.rangeLength - 1];
+export function intersectAndMapRange(input: Range, mapRange: MapRange): [Range | undefined, Range | undefined, Range | undefined] {
+  const [inputFirst, inputLast] = [input.start, input.end];
+  const [mapRangeFirst, mapRangeLast] = [mapRange.sourceStart, mapRange.sourceEnd];
 
   if (
-    inputFirst > mapRangeLast || // input above mapRange
+    inputFirst > mapRangeLast
+  ) {
+    return [undefined, undefined, input];
+  } else if (
     inputLast < mapRangeFirst // input below mapRange
   ) {
-    return;
+    return [input, undefined, undefined];
   } else {
     return [
       (inputFirst < mapRangeFirst) ? {
         start: inputFirst,
-        length: mapRangeFirst - inputFirst,
+        end: mapRangeFirst - 1,
       } : undefined,
-      (inputFirst < mapRangeFirst) ? {
-        start: mapRange.destinationStart,
-        length: mapRangeLast < inputLast ? mapRangeLast - mapRangeFirst + 1 : inputLast - mapRangeFirst + 1,
-      } : {
-        start: mapRange.destinationStart + (inputFirst - mapRange.sourceStart),
-        length: mapRangeLast < inputLast ? mapRangeLast - inputFirst + 1 : inputLast - inputFirst + 1,
+      {
+        start: Math.max(inputFirst, mapRangeFirst) + (mapRange.destinationStart - mapRange.sourceStart),
+        end: Math.min(mapRangeLast, inputLast) + (mapRange.destinationStart - mapRange.sourceStart),
       },
       (inputLast > mapRangeLast) ? {
         start: mapRangeLast + 1,
-        length: inputLast - mapRangeLast,
+        end: inputLast,
       } : undefined
     ];
   }
 }
 
-function intersectMap(input: Range, map: Map): Range[] { 
-  function intersectMapRec(mapRanges: MapRange[], acc: Array<Range | undefined>, leftover: Range | undefined) {
-    const [mapRange, ...rest] = mapRanges;
-
-    if (JSON.stringify(mapRanges.sort((a, b) => a.sourceStart - b.sourceStart)) !== JSON.stringify(mapRanges)) {
-      throw new Error("Not sorted");      
-    }
-
+function mapRange(input: Range, map: Map): Range[] { 
+  function intersectMapRec([mapRange, ...rest]: MapRange[], acc: Array<Range | undefined>, leftover: Range | undefined) {
     if (mapRange === undefined || leftover === undefined) {
-      return ([...acc, leftover].filter((a) => a !== undefined) as Range[]).sort((a, b) => a.start - b.start);
+      return ([...acc, leftover].filter((a) => a !== undefined) as Range[]);
     } else {
-      const intersections = intersectAndMapRange(input, mapRange);
-
-      if (intersections !== undefined) {
-        const [beforeMatch, match, afterMatch] = intersections;
-        return intersectMapRec(rest, [...acc, beforeMatch, match], afterMatch);
-      } else {
-        return intersectMapRec(rest, acc, leftover);
-      }
+      const [beforeMatch, match, afterMatch] = intersectAndMapRange(leftover, mapRange);
+      return intersectMapRec(rest, [...acc, beforeMatch, match], afterMatch);
     }
   }
 
@@ -170,10 +158,10 @@ function intersectMap(input: Range, map: Map): Range[] {
 }
 
 function flatMapRanges(inputs: Range[], map: Map): Range[] {
-  return inputs.flatMap((i) => intersectMap(i, map));
+  return inputs.flatMap((i) => mapRange(i, map));
 }
 
-export function findSeedRangeLocations(seedRange: Range, almanac: Almanac): Range[] {
+export function seedRangeToLocations(seedRange: Range, almanac: Almanac): Range[] {
   return flatMapRanges(
     flatMapRanges(
       flatMapRanges(
@@ -195,7 +183,7 @@ export function findSeedRangeLocations(seedRange: Range, almanac: Almanac): Rang
 export function day5part2(input: string): number {
   const almanac = parseInput(input);
 
-  return Math.min(...(expandSeedRanges(almanac.seeds).flatMap((s) => findSeedRangeLocations(s, almanac)).map((sr) => sr.start)));
+  return Math.min(...(expandSeedRanges(almanac.seeds).flatMap((s) => seedRangeToLocations(s, almanac)).map((sr) => sr.start)));
 }
 
 function expandSeedRangesNaive(seeds: number[]): number[] {

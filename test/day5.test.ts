@@ -1,4 +1,4 @@
-import { day5part1, day5part2, day5part2naive, findSeedRangeLocations, intersectAndMapRange, parseInput } from "../src/day5";
+import { day5part1, day5part2, day5part2naive, seedRangeToLocations, intersectAndMapRange, parseInput } from "../src/day5";
 import { readFileSync } from "fs";
 
 const sample = `seeds: 79 14 55 13
@@ -45,14 +45,14 @@ describe("Day5", () => {
           {
             destinationStart: 52,
             sourceStart: 50,
-            rangeLength: 48,
+            sourceEnd: 50 + 48 - 1,
           }
         ]),
         humidityToLocation: expect.arrayContaining([
           {
             destinationStart: 56,
             sourceStart: 93,
-            rangeLength: 4,
+            sourceEnd: 93 + 4 - 1,
           }
         ]),
       }))
@@ -70,72 +70,76 @@ describe("Day5", () => {
   describe("Part2", () => {
     describe("Intersect ranges", () => {
       test("No intersection", () => {
-        expect(intersectAndMapRange({ start: 4, length: 3 }, { destinationStart: 4, sourceStart: 8, rangeLength: 199 })).toBeUndefined();
+        expect(intersectAndMapRange({ start: 4, end: 6 }, { destinationStart: 4, sourceStart: 8, sourceEnd: 199 })).toEqual([
+          { start: 4, end: 6 },
+          undefined,
+          undefined,
+        ]);
       });
 
       test("Input superset of maprange", () => {
         expect(intersectAndMapRange(
-          { start: 0, length: 4 }, // 0, 1, 2, 3
-          { destinationStart: 164, sourceStart: 2, rangeLength: 1 }) // 2
+          { start: 0, end: 3 }, // 0, 1, 2, 3
+          { destinationStart: 164, sourceStart: 2, sourceEnd: 2 }) // 2
         ).toEqual([
-          { start: 0, length: 2 }, // 0, 1
-          { start: 164, length: 1 }, // 2 -> 164
-          { start: 3, length: 1 }, // 3
+          { start: 0, end: 1 }, // 0, 1
+          { start: 164, end: 164 }, // 2 -> 164
+          { start: 3, end: 3 }, // 3
         ]);
       });
 
       test("Input subset of maprange", () => {
         expect(intersectAndMapRange(
-          { start: 2, length: 2 },
-          { destinationStart: -32, sourceStart: 0, rangeLength: 16 })
+          { start: 2, end: 3 },
+          { destinationStart: -32, sourceStart: 0, sourceEnd: 16 })
         ).toEqual([
           undefined,
-          { start: -30, length: 2 }, // 2, 3 -> -30
+          { start: -30, end: -29 }, // 2, 3 -> -30
           undefined,
         ]);
       });
 
       test("Input starts with maprange", () => {
         expect(intersectAndMapRange(
-          { start: 0, length: 2 },
-          { destinationStart: 55, sourceStart: 0, rangeLength: 16 })
+          { start: 0, end: 2 },
+          { destinationStart: 55, sourceStart: 0, sourceEnd: 16 })
         ).toEqual([
           undefined,
-          { start: 55, length: 2 }, // 0, 1 -> 55
+          { start: 55, end: 57 }, // 0, 1, 2 -> 55
           undefined,
         ]);
       });
 
       test("Input ends with maprange", () => {
         expect(intersectAndMapRange(
-          { start: 2, length: 2 },
-          { destinationStart: 5, sourceStart: 0, rangeLength: 4 })
+          { start: 2, end: 3 },
+          { destinationStart: 5, sourceStart: 0, sourceEnd: 3 })
         ).toEqual([
           undefined,
-          { start: 7, length: 2 }, // 2, 3 -> 7
+          { start: 7, end: 8 }, // 2, 3 -> 7
           undefined,
         ]);
       });
 
       test("Input partially below maprange", () => {
         expect(intersectAndMapRange(
-          { start: -2, length: 4 }, // -2, -1, 0, 1
-          { destinationStart: 5, sourceStart: 0, rangeLength: 4 }) // 0, 1, 2, 3
+          { start: -2, end: 1 }, // -2, -1, 0, 1
+          { destinationStart: 5, sourceStart: 0, sourceEnd: 3 }) // 0, 1, 2, 3
         ).toEqual([
-          { start: -2, length: 2 }, // -2, -1
-          { start: 5, length: 2 }, // 0, 1 -> 6
+          { start: -2, end: -1 }, // -2, -1
+          { start: 5, end: 6 }, // 0, 1 -> 6
           undefined,
         ]);
       });
 
       test("Input partially above maprange", () => {
         expect(intersectAndMapRange(
-          { start: 3, length: 4 }, // 3, 4, 5, 6
-          { destinationStart: -5, sourceStart: 0, rangeLength: 4 }) // 0, 1, 2, 3
+          { start: 3, end: 6 }, // 3, 4, 5, 6
+          { destinationStart: -5, sourceStart: 0, sourceEnd: 3 }) // 0, 1, 2, 3
         ).toEqual([
           undefined,
-          { start: -2, length: 1 }, // 3 -> -2
-          { start: 4, length: 3 }, // 4, 5, 6
+          { start: -2, end: -2 }, // 3 -> -2
+          { start: 4, end: 6 }, // 4, 5, 6
         ]);
       });
     });
@@ -146,15 +150,15 @@ describe("Day5", () => {
     });
 
     test("Sample calc", () => {
-      expect(findSeedRangeLocations({ start: 82, length: 1 }, parseInput(sample))[0].start).toEqual(46);
+      expect(seedRangeToLocations({ start: 82, end: 82 }, parseInput(sample))[0].start).toEqual(46);
     });
 
     test("Sample", () => {
       expect(day5part2(sample)).toEqual(46);
     });
 
-    test.failing("Real", () => {
-      expect(day5part2(readFileSync("inputs/day5.txt", { encoding: "utf-8" }))).toEqual(-1);
+    test("Real", () => {
+      expect(day5part2(readFileSync("inputs/day5.txt", { encoding: "utf-8" }))).toEqual(99751240);
     });
   });
 });
