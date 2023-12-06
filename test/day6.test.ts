@@ -1,4 +1,4 @@
-import { waysToWinARace, Race, day6part1 } from "../src/day6";
+import { waysToWinARace, Race, day6part1, day6part2 } from "../src/day6";
 import realInput from "../inputs/day6.json";
 
 const sample: Race[] = [
@@ -40,10 +40,6 @@ describe("Day6", () => {
   });
 
   describe("Part2", () => {
-    const [newRaceTime, newRaceDist] = realInput.reduce(([prevTime, prevDist], currRace) => {
-      return [`${prevTime}${currRace.time}`, `${prevDist}${currRace.distance}`];
-    }, ["", ""]).map((s) => parseInt(s));
-
-    expect(day6part1([{ time: newRaceTime, distance: newRaceDist }])).toEqual(45647654);
+    expect(day6part2(realInput)).toEqual(45647654);
   });
 });
