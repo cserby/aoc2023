@@ -23,3 +23,11 @@ export function waysToWinARace(race: Race): number {
 export function day6part1(races: Race[]): number {
   return races.map(waysToWinARace).reduce((acc, curr) => acc * curr, 1);
 }
+
+export function day6part2(races: Race[]): number {
+  const [newRaceTime, newRaceDist] = races.reduce(([prevTime, prevDist], currRace) => {
+    return [`${prevTime}${currRace.time}`, `${prevDist}${currRace.distance}`];
+  }, ["", ""]).map((s) => parseInt(s));
+
+  return day6part1([{ time: newRaceTime, distance: newRaceDist }]);
+}
