@@ -38,4 +38,12 @@ describe("Day6", () => {
       expect(day6part1(realInput)).toEqual(316800);
     })
   });
+
+  describe("Part2", () => {
+    const [newRaceTime, newRaceDist] = realInput.reduce(([prevTime, prevDist], currRace) => {
+      return [`${prevTime}${currRace.time}`, `${prevDist}${currRace.distance}`];
+    }, ["", ""]).map((s) => parseInt(s));
+
+    expect(day6part1([{ time: newRaceTime, distance: newRaceDist }])).toEqual(45647654);
+  });
 });
