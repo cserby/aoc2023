@@ -32,40 +32,71 @@ export function parseInput(input: string): Hand[] {
   return input.split("\n").map(parseHand);
 }
 
-function hasACardWithCount(h: Hand, count: number): boolean {
-  return Object.values(h.cardCounts).find((c) => c === count) !== undefined;
+function hasACardWithCount(h: Hand, count: number, useJokers: boolean): boolean {
+  if (!useJokers) {
+    return Object.values(h.cardCounts).find((c) => c === count) !== undefined;
+  } else {
+    const { J, ...others } = h.cardCounts;
+    return J >= count || Object.values(others).find((c) => c + (J ?? 0) >= count) !== undefined;
+  }
 }
 
-function fiveOfAKind(h: Hand): boolean {
-  return hasACardWithCount(h, 5);
+function fiveOfAKind(h: Hand, useJokers: boolean): boolean {
+  return hasACardWithCount(h, 5, useJokers);
 }
 
-function fourOfAKind(h: Hand): boolean {
-  return hasACardWithCount(h, 4);
+export function fourOfAKind(h: Hand, useJokers: boolean): boolean {
+  return hasACardWithCount(h, 4, useJokers);
 }
 
-function fullHouse(h: Hand): boolean {
-  return hasACardWithCount(h, 3) && hasACardWithCount(h, 2);
+export function fullHouse(h: Hand, useJokers: boolean): boolean {
+  if (!useJokers) {
+    return hasACardWithCount(h, 3, useJokers) && hasACardWithCount(h, 2, useJokers);
+  } else {
+    const { J, ...others } = h.cardCounts;
+
+    if (J === 3) {
+      return true; //JJJ
+    } else if (J === 2) {
+      return count(Object.values(others))[2] > 0; //JJXXz
+    } else if (J === 1) {
+      return count(Object.values(others))[2] == 2; //Jxyzv
+    } else {
+      return fullHouse(h, false);
+    }
+  }
 }
 
-function threeOfAKind(h: Hand): boolean {
-  return hasACardWithCount(h, 3);
+export function threeOfAKind(h: Hand, useJokers: boolean): boolean {
+  return hasACardWithCount(h, 3, useJokers);
 }
 
-function twoPairs(h: Hand): boolean {
-  return count(Object.values(h.cardCounts))[2] == 2;
+export function twoPairs(h: { cardCounts: Record<Card, number> }, useJokers: boolean): boolean {
+  if (!useJokers) {
+    return count(Object.values(h.cardCounts))[2] == 2;
+  } else {
+    const { J, ...others } = h.cardCounts;
+
+    if (J == 2) { // can't be more, as then we'd have at least threeOfAKind
+      return true; // JJxyz
+    } else if (J == 1) {
+      return count(Object.values(others))[2] > 0; // JXXyz
+    } else { // J == 0
+      return twoPairs(h, false);
+    }
+  }
 }
 
-function onePair(h: Hand): boolean {
-  return hasACardWithCount(h, 2);
+function onePair(h: Hand, useJokers: boolean): boolean {
+  return hasACardWithCount(h, 2, useJokers);
 }
 
-function mapCardsToStrength(cards: Card[]): string {
+function mapCardsToStrength(cards: Card[], useJokers: boolean): string {
   const cardToStrength: Record<Card, string> = {
     "A": "a",
     "K": "b",
     "Q": "c",
-    "J": "d",
+    "J": useJokers ? "n" : "d",
     "T": "e",
     "9": "f",
     "8": "g",
@@ -80,49 +111,49 @@ function mapCardsToStrength(cards: Card[]): string {
   return cards.reduce((prevStr, currCard) => `${prevStr}${cardToStrength[currCard]}`, "");
 }
 
-function compareBasedOnCardStrength(a: Hand, b: Hand): number {
-  return -1 * mapCardsToStrength(a.cards).localeCompare(mapCardsToStrength(b.cards))
+function compareBasedOnCardStrength(a: Hand, b: Hand, useJokers: boolean): number {
+  return -1 * mapCardsToStrength(a.cards, useJokers).localeCompare(mapCardsToStrength(b.cards, useJokers))
 }
 
-export function compareHands(a: Hand, b: Hand): number {
-  if (fiveOfAKind(a) || fiveOfAKind(b)) {
-    if (fiveOfAKind(a) && fiveOfAKind(b)) {
-      return compareBasedOnCardStrength(a, b);
+export function compareHands(a: Hand, b: Hand, useJokers = false): number {
+  if (fiveOfAKind(a, useJokers) || fiveOfAKind(b, useJokers)) {
+    if (fiveOfAKind(a, useJokers) && fiveOfAKind(b, useJokers)) {
+      return compareBasedOnCardStrength(a, b, useJokers);
     } else {
-      return fiveOfAKind(a) ? 1 : -1;
+      return fiveOfAKind(a, useJokers) ? 1 : -1;
     }
-  } else if (fourOfAKind(a) || fourOfAKind(b)) {
-    if (fourOfAKind(a) && fourOfAKind(b)) {
-      return compareBasedOnCardStrength(a, b);
+  } else if (fourOfAKind(a, useJokers) || fourOfAKind(b, useJokers)) {
+    if (fourOfAKind(a, useJokers) && fourOfAKind(b, useJokers)) {
+      return compareBasedOnCardStrength(a, b, useJokers);
     } else {
-      return fourOfAKind(a) ? 1 : -1;
+      return fourOfAKind(a, useJokers) ? 1 : -1;
     }
-  } else if (fullHouse(a) || fullHouse(b)) {
-    if (fullHouse(a) && fullHouse(b)) {
-      return compareBasedOnCardStrength(a, b);
+  } else if (fullHouse(a, useJokers) || fullHouse(b, useJokers)) {
+    if (fullHouse(a, useJokers) && fullHouse(b, useJokers)) {
+      return compareBasedOnCardStrength(a, b, useJokers);
     } else {
-      return fullHouse(a) ? 1 : -1;
+      return fullHouse(a, useJokers) ? 1 : -1;
     }
-  } else if (threeOfAKind(a) || threeOfAKind(b)) {
-    if (threeOfAKind(a) && threeOfAKind(b)) {
-      return compareBasedOnCardStrength(a, b);
+  } else if (threeOfAKind(a, useJokers) || threeOfAKind(b, useJokers)) {
+    if (threeOfAKind(a, useJokers) && threeOfAKind(b, useJokers)) {
+      return compareBasedOnCardStrength(a, b, useJokers);
     } else {
-      return threeOfAKind(a) ? 1 : -1;
+      return threeOfAKind(a, useJokers) ? 1 : -1;
     }
-  } else if (twoPairs(a) || twoPairs(b)) {
-    if (twoPairs(a) && twoPairs(b)) {
-      return compareBasedOnCardStrength(a, b);
+  } else if (twoPairs(a, useJokers) || twoPairs(b, useJokers)) {
+    if (twoPairs(a, useJokers) && twoPairs(b, useJokers)) {
+      return compareBasedOnCardStrength(a, b, useJokers);
     } else {
-      return twoPairs(a) ? 1 : -1;
+      return twoPairs(a, useJokers) ? 1 : -1;
     }
-  } else if (onePair(a) || onePair(b)) {
-    if (onePair(a) && onePair(b)) {
-      return compareBasedOnCardStrength(a, b);
+  } else if (onePair(a, useJokers) || onePair(b, useJokers)) {
+    if (onePair(a, useJokers) && onePair(b, useJokers)) {
+      return compareBasedOnCardStrength(a, b, useJokers);
     } else {
-      return onePair(a) ? 1 : -1;
+      return onePair(a, useJokers) ? 1 : -1;
     }
   } else {
-    return compareBasedOnCardStrength(a, b);
+    return compareBasedOnCardStrength(a, b, useJokers);
   }
 }
 
@@ -132,4 +163,8 @@ export function scoreHand(h: Hand, rank: number): number {
 
 export function day7part1(input: string): number {
   return parseInput(input).sort(compareHands).reduce((prevWinning, currHand, currIndex, _cardsSorted) => prevWinning + scoreHand(currHand, currIndex + 1), 0);
+}
+
+export function day7part2(input: string): number {
+  return parseInput(input).sort((a, b) => compareHands(a, b, true)).reduce((prevWinning, currHand, currIndex, _cardsSorted) => prevWinning + scoreHand(currHand, currIndex + 1), 0);
 }
