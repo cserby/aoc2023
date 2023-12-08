@@ -1,3 +1,5 @@
+import { writeFileSync } from "fs";
+
 export interface MapNode {
   id: string;
   left: string;
@@ -36,34 +38,27 @@ export function* instructions(puzzle: Puzzle): Generator<Instruction, never, any
   }
 }
 
-function numberOfStepsNavigating(map: Map, instructions: Generator<Instruction, never, any>, startNode: string, endNode: string): number {
-  // function navigateRec(currNode: string, stepsSoFar: number): number {
-  //   if (currNode === endNode) return stepsSoFar;
-  //   else {
-  //     const instruction = instructions.next();
-  //     switch (instruction.value) {
-  //       case "R": return navigateRec(map[currNode].right, stepsSoFar + 1);
-  //       case "L": return navigateRec(map[currNode].left, stepsSoFar + 1);
-  //     }
-  //   }
-  // }
-  //
-  //return navigateRec(startNode, 0);
+function nextNode(currNode: string, map: Map, instruction: Instruction): string {
+  switch (instruction) {
+    case "R": {
+      return map[currNode].right;
+    }
+    case "L": {
+      return map[currNode].left;
+    }
+  }
+}
+
+function numberOfStepsNavigating(puzzle: Puzzle): number {
+  const instr = instructions(puzzle);
 
   let stepsSoFar = 0;
-  let currNode = startNode;
+  let currNode = "AAA";
   do {
-    const instruction = instructions.next();
-    switch (instruction.value) {
-      case "R": {
-        currNode = map[currNode].right; break;
-      }
-      case "L": {
-        currNode = map[currNode].left; break;
-      }
-    }
+    const instruction = instr.next().value;
+    currNode = nextNode(currNode, puzzle.map, instruction);
     stepsSoFar++;
-  } while (currNode !== endNode);
+  } while (currNode !== "ZZZ");
 
   return stepsSoFar;
 }
@@ -71,5 +66,33 @@ function numberOfStepsNavigating(map: Map, instructions: Generator<Instruction, 
 export function day8part1(input: string): number {
   const puzzle = parseInput(input);
 
-  return numberOfStepsNavigating(puzzle.map, instructions(puzzle), "AAA", "ZZZ");
+  return numberOfStepsNavigating(puzzle);
+}
+
+function numberOfStepsNavigatingGhostly(puzzle: Puzzle): number {
+  const inst = instructions(puzzle);
+  let currNodes = Object.keys(puzzle.map).filter((n) => n.endsWith("A"));
+  let lastAtZ = Array<Array<{ afterStep: number; node: string }>>(currNodes.length).fill([]).map(() => []);
+  let stepsSoFar = 0;
+  do {
+    const instruction = inst.next().value;
+    currNodes = currNodes.map((n, index) => {
+      const nn = nextNode(n, puzzle.map, instruction);
+      if (nn.endsWith("Z")) {
+        lastAtZ[index].push({ afterStep: stepsSoFar, node: nn } as never);
+      }
+      return nn;
+    });
+    stepsSoFar++;
+  } while (!currNodes.every((n) => n.endsWith("Z")) && stepsSoFar < 1_000_000);
+
+  writeFileSync("./cycles.json", JSON.stringify(lastAtZ, undefined, 2));
+
+  return stepsSoFar;
+}
+
+export function day8part2(input: string): number {
+  const puzzle = parseInput(input);
+
+  return numberOfStepsNavigatingGhostly(puzzle);
 }
