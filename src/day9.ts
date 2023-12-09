@@ -21,3 +21,13 @@ export function day9part1(input: string): number {
     .map(predict)
     .reduce((a, b) => a + b, 0);
 }
+
+export function day9part2(input: string): number {
+  const lines = input.split("\n");
+
+  return lines
+    .map((l) => l.split(" ").map((n) => parseInt(n)))
+    .map((l) => l.reverse())
+    .map(predict)
+    .reduce((a, b) => a + b, 0);
+}
