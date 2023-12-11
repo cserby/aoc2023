@@ -51,23 +51,23 @@ export function findEmpty(stars: Coords[], fieldSelector: (s: Coords) => number,
   );
 }
 
-export function expand(galaxy: Galaxy): Galaxy {
+export function expand(galaxy: Galaxy, times: number = 2): Galaxy {
   const stars = galaxy.stars.reduce((prevStars, currStar) => {
     prevStars.push({
-      line: currStar.line + galaxy.emptyLines.filter((el) => el < currStar.line).length,
-      char: currStar.char + galaxy.emptyChars.filter((ec) => ec < currStar.char).length,
+      line: currStar.line + (galaxy.emptyLines.filter((el) => el < currStar.line).length) * (times - 1),
+      char: currStar.char + (galaxy.emptyChars.filter((ec) => ec < currStar.char).length) * (times - 1),
     });
     return prevStars;
   }, [] as Coords[]);
-  const numLines = galaxy.numLines + galaxy.emptyLines.length;
-  const numChars = galaxy.numChars + galaxy.emptyChars.length;
+  const numLines = galaxy.numLines + galaxy.emptyLines.length * (times - 1);
+  const numChars = galaxy.numChars + galaxy.emptyChars.length * (times - 1);
 
   return {
     stars,
     numLines,
     numChars,
-    emptyChars: findEmpty(stars, (s) => s.char, numChars),
-    emptyLines: findEmpty(stars, (s) => s.line, numLines),
+    emptyChars: times === 2 ? findEmpty(stars, (s) => s.char, numChars) : [],
+    emptyLines: times === 2 ? findEmpty(stars, (s) => s.line, numLines) : [],
   };
 }
 
@@ -83,8 +83,16 @@ export function* allPairs<T>(a: Array<T>): Generator<[T, T], void, unknown> {
   }
 }
 
-export function day11part1(input: string): number {
-  return [...allPairs(expand(parseInput(input)).stars)]
+export function sumDistances(input: string, expandTimes: number = 2): number {
+  return [...allPairs(expand(parseInput(input), expandTimes).stars)]
     .map(([a, b]) => distance(a, b))
     .reduce((a, b) => a + b, 0);
+}
+
+export function day11part1(input: string): number {
+  return sumDistances(input);
+}
+
+export function day11part2(input: string): number {
+  return sumDistances(input, 1_000_000);
 }
