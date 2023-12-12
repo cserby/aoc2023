@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { day12part1, day12part2, parseInput, possibleSolutions, runLengths, unfold } from "../src/day12";
+import { allPossibleSplits, day12part1, day12part2, parseInput, possibleSolutions, possibleSolutions2, runLengths, unfold } from "../src/day12";
 
 const sample = `???.### 1,1,3
 .??..??...?##. 1,1,3
@@ -51,26 +51,36 @@ describe("Day12", () => {
     });
 
     test("Sample1", () => {
+      expect(possibleSolutions2(parseInput("###???? 3,1,1")[0])).toEqual(1);
+      expect(possibleSolutions2(parseInput("??? 1,1")[0])).toEqual(1);
+      expect(possibleSolutions2(parseInput("### 3")[0])).toEqual(1);
+
       expect(day12part2(sample.split("\n")[0])).toEqual(1);
     });
 
     test("Sample2", () => {
-      // v8Profiler.setGenerateType(1);
-      // v8Profiler.startProfiling("Sample2", true);
       expect(day12part2(sample.split("\n")[1])).toEqual(16384);
-      // const profile = v8Profiler.stopProfiling("Sample2");
-      // profile.export((error, result) => {
-      //   writeFileSync("Sample2.cpuprofile", result ?? "");
-      //   profile.delete();
-      // });
     });
 
     test("Sample3", () => {
       expect(day12part2(sample.split("\n")[2])).toEqual(1);
     });
 
+    test("Can be solution", () => {
+      expect(possibleSolutions2(parseInput("???#??? 1")[0])).toEqual(1);
+    });
+
     test("Sample from real", () => {
-      expect(day12part2("???#???.?#?????? 1,2,2,3,2")).toEqual(1);
+      expect(day12part2("???#???.?#?????? 1,2,2,3,2")).toEqual(50000);
+    });
+
+    test("All possible splits", () => {
+      expect([...allPossibleSplits([1, 2, 3], 1)]).toEqual([[[1, 2, 3]]]);
+      expect([...allPossibleSplits([1, 2, 3], 2)]).toEqual([
+        [[1], [2, 3]],
+        [[1, 2], [3]],
+      ]);
+
     });
 
     // test("Real", () => {
