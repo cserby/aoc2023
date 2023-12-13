@@ -60,7 +60,7 @@ describe("Day13", () => {
     });
 
     test("Real", () => {
-      expect(day13part2(readFileSync("inputs/day13.txt", { encoding: "utf-8" }))).toEqual(39583);
+      expect(day13part2(readFileSync("inputs/day13.txt", { encoding: "utf-8" }))).toEqual(32312);
     });
   });
 });

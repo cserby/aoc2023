@@ -39,7 +39,7 @@ export function isMirrorAfterLineWithSmudge(puzzle: Puzzle, line: number): boole
       return false;
     }
   }
-  return true;
+  return errors === 1;
 }
 
 export function findHorizontalMirror(puzzle: Puzzle, allowSmudge = false): number | undefined {
@@ -72,13 +72,16 @@ export function day13part1(input: string): number {
 
 export function day13part2(input: string): number {
   return parseInput(input).reduce((prevSum, puzzle) => {
+    const part1horizontal = findHorizontalMirror(puzzle, false);
     const horizontal = findHorizontalMirror(puzzle, true);
-    const vertical = findHorizontalMirror(transpose(puzzle), true);
     if (horizontal !== undefined) {
-      return prevSum + 100 * horizontal;
+      return prevSum + 100 * ((horizontal !== part1horizontal) ? horizontal : 0);
     } else {
+      const t = transpose(puzzle);
+      const part1vertical = findHorizontalMirror(t, false)
+      const vertical = findHorizontalMirror(t, true);
       if (vertical !== undefined) {
-        return prevSum + vertical;
+        return prevSum + (vertical !== part1vertical ? vertical : 0);
       } else {
         throw new Error("No mirror found");
       }
