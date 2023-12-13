@@ -20,6 +20,10 @@ export function runLengths(fields: string[]): number[] {
   return fields.join("").split(/[.?]/).map((s) => s.length).filter((l) => l !== 0);
 }
 
+function isSolution(fields: string[], arr: Arrangement): boolean {
+  return fields.find((f) => f === "?") !== undefined || JSON.stringify(runLengths(fields)) === JSON.stringify(arr.runLengths);
+}
+
 function arrayStartsWith<T>(compareTo: T[], compared: T[]): boolean {
   for (let i = 0; i < compared.length; i++) {
     if (compareTo[i] !== compared[i]) {
@@ -81,10 +85,8 @@ export function possibleSolutions(arr: Arrangement): string[] {
   function psrec(fields: string[], decidedFields: string[]): string[] {
     const [head, ...tail] = fields;
 
-    if (!canBeSolution(decidedFields, arr.fields, arr.runLengths)) {
-      return [];
-    } else if (head === undefined) {
-      return isASolution(decidedFields, arr.runLengths) ? [decidedFields.join("")] : [];
+    if (head === undefined) {
+      return isSolution(decidedFields, arr) ? [decidedFields.join("")] : [];
     } else if (head === "." || head === "#") {
       const [sure, unsure] = takeWhileSure(fields);
       return psrec(unsure, [...decidedFields, ...sure]);
