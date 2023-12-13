@@ -51,6 +51,7 @@ describe("Day12", () => {
     });
 
     test("Sample1", () => {
+      expect(possibleSolutions2(parseInput("..?##. 3")[0])).toEqual(1);
       expect(possibleSolutions2(parseInput("###???? 3,1,1")[0])).toEqual(1);
       expect(possibleSolutions2(parseInput("??? 1,1")[0])).toEqual(1);
       expect(possibleSolutions2(parseInput("### 3")[0])).toEqual(1);
@@ -77,14 +78,20 @@ describe("Day12", () => {
     test("All possible splits", () => {
       expect([...allPossibleSplits([1, 2, 3], 1)]).toEqual([[[1, 2, 3]]]);
       expect([...allPossibleSplits([1, 2, 3], 2)]).toEqual([
+        [[], [1, 2, 3]],
         [[1], [2, 3]],
         [[1, 2], [3]],
+        [[1, 2, 3], []],
       ]);
-
+      expect([...allPossibleSplits([1], 3)]).toEqual([
+        [[], [], [1]],
+        [[], [1], []],
+        [[1], [], []],
+      ]);
     });
 
-    // test("Real", () => {
-    //   expect(day12part2(readFileSync("inputs/day12.txt", { encoding: "utf-8" }))).toEqual(-1);
-    // });
+    test("Real", () => {
+      expect(day12part2(readFileSync("inputs/day12.txt", { encoding: "utf-8" }))).toEqual(8475948826693);
+    });
   });
 });
