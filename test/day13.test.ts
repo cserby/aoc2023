@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { parseInput, transpose, findHorizontalMirror, day13part1 } from "../src/day13";
+import { parseInput, transpose, findHorizontalMirror, day13part1, day13part2 } from "../src/day13";
 
 const sample = `#.##..##.
 ..#.##.#.
@@ -46,7 +46,21 @@ describe("Day13", () => {
     });
 
     test("Real", () => {
-      expect(day13part1(readFileSync("inputs/day13.txt", { encoding: "utf-8" }))).toEqual(31914);
+      expect(day13part1(readFileSync("inputs/day13.txt", { encoding: "utf-8" }))).toEqual(33122);
+    });
+  });
+
+  describe("Part2", () => {
+    test("Vertical", () => {
+      expect(findHorizontalMirror(parseInput(sample)[0], true)).toEqual(3);
+    });
+
+    test("Sample", () => {
+      expect(day13part2(sample)).toEqual(400);
+    });
+
+    test("Real", () => {
+      expect(day13part2(readFileSync("inputs/day13.txt", { encoding: "utf-8" }))).toEqual(39583);
     });
   });
 });
