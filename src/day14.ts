@@ -81,7 +81,7 @@ function calcTiltLeft(puzzle: Puzzle): Puzzle {
   return puzzle.map(calcTiltLeftLine);
 }
 
-function toString(puzzle: Puzzle): string {
+export function toString(puzzle: Puzzle): string {
   return puzzle.map((l) => l.join("")).join("\n");
 }
 
@@ -138,5 +138,5 @@ export function day14part2(input: string, rounds = 1000000000): number {
     puzzle = cycle(puzzle);
   }
 
-  return load2(parseInput(rotateRight(puzzle)));
+  return load2(parseInput(puzzle));
 }
