@@ -33,16 +33,19 @@ export function rotateLeft(puzzle: Puzzle): Puzzle {
   return puzzle[0].map((_, index) => puzzle.map(row => row[row.length-1-index]));
 }
 
-const rotateRightMemo: Map<Puzzle, Puzzle> = new Map();
+const rotateRightMemo: Map<string, string> = new Map();
 
-export function rotateRight(puzzle: Puzzle): Puzzle {
+type Puzzle2 = string;
+
+export function rotateRight(puzzle: Puzzle2): Puzzle2 {
   if (!rotateRightMemo.has(puzzle)) {
-    rotateRightMemo.set(puzzle, puzzle[0].map((_, index) => puzzle.map(row => row[index]).reverse()));
+    const puzzleParsed = parseInput(puzzle);
+    rotateRightMemo.set(puzzle, toString(puzzleParsed.map((_, index) => puzzleParsed.map(row => row[index]).reverse())));
   }
   return rotateRightMemo.get(puzzle)!;
 }
 
-const tiltMemo: Map<Puzzle, Puzzle> = new Map();
+const tiltMemo: Map<string, string> = new Map();
 
 function calcTiltLeftLine(line: string[]): string[] {
   interface State {
@@ -78,9 +81,14 @@ function calcTiltLeft(puzzle: Puzzle): Puzzle {
   return puzzle.map(calcTiltLeftLine);
 }
 
-export function tiltLeft(puzzle: Puzzle): Puzzle {
+function toString(puzzle: Puzzle): string {
+  return puzzle.map((l) => l.join("")).join("\n");
+}
+
+export function tiltLeft(puzzle: Puzzle2): Puzzle2 {
   if (!tiltMemo.has(puzzle)) {
-    tiltMemo.set(puzzle, calcTiltLeft(puzzle));
+    const puzzleParsed = parseInput(puzzle);
+    tiltMemo.set(puzzle, toString(calcTiltLeft(puzzleParsed)));
   }
   return tiltMemo.get(puzzle)!;
 }
@@ -99,31 +107,36 @@ export function load2(puzzle: Puzzle): number {
   return puzzle.map(loadOfLine2).reduce((a, b) => a + b);
 }
 
-export function cycle(puzzle: Puzzle): Puzzle {
+const cycleMemo: Map<string, string> = new Map();
+
+export function cycle(puzzle: Puzzle2): Puzzle2 {
   // Assuming that North is to the left
-  return rotateRight( // Left is north
-    tiltLeft( // Rocks roll east
-      rotateRight( // Left is east
-        tiltLeft( // Rocks roll south
-          rotateRight( // Left is south
-            tiltLeft( // Rocks roll west
-              rotateRight( // Left is west
-                tiltLeft(puzzle) // Rocks roll north
+  if (!cycleMemo.has(puzzle)) {
+    cycleMemo.set(puzzle, rotateRight( // Left is north
+      tiltLeft( // Rocks roll east
+        rotateRight( // Left is east
+          tiltLeft( // Rocks roll south
+            rotateRight( // Left is south
+              tiltLeft( // Rocks roll west
+                rotateRight( // Left is west
+                  tiltLeft(puzzle) // Rocks roll north
+                )
               )
             )
           )
         )
       )
-    )
-  );
+    ));
+  }
+  return cycleMemo.get(puzzle)!;
 }
 
 export function day14part2(input: string, rounds = 1000000000): number {
-  let puzzle = rotateLeft(parseInput(input));
+  let puzzle = toString(rotateLeft(parseInput(input)));
 
   for (let i = 0; i < rounds; i++) {
     puzzle = cycle(puzzle);
   }
 
-  return load2(rotateRight(puzzle));
+  return load2(parseInput(rotateRight(puzzle)));
 }

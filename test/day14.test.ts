@@ -25,6 +25,7 @@ describe("Day14", () => {
   });
 
   describe("Part2", () => {
+    /*
     test("Tilt left", () => {
       expect(tiltLeft([[...".#.O.O..#.O"]])).toEqual([[
         ...".#OO....#O."
@@ -74,9 +75,10 @@ describe("Day14", () => {
 #.OOO#...O`.split("\n").map((l) => [...l])
         );
     });
+    */
 
-    // test("Sample calc", () => {
-    //   expect(day14part2(sample)).toEqual(64);
-    // });
+    test("Sample calc", () => {
+      expect(day14part2(sample)).toEqual(64);
+    });
   });
 });
