@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { HASH, day15part1 } from "../src/day15";
+import { HASH, day15part1, day15part2 } from "../src/day15";
 
 const sample = `rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7`;
 
@@ -15,6 +15,16 @@ describe("Day15", () => {
     
     test("Real", () => {
       expect(day15part1(readFileSync("inputs/day15.txt", { encoding: "utf-8" }))).toEqual(497373);
+    });
+  });
+
+  describe("Part2", () => {
+    test("Sample", () => {
+      expect(day15part2(sample)).toEqual(145);
+    });
+
+    test("Real", () => {
+      expect(day15part2(readFileSync("inputs/day15.txt", { encoding: "utf-8" }))).toEqual(259356);
     });
   });
 });
