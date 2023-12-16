@@ -103,14 +103,8 @@ export function rayTrace(puzzle: Puzzle, energized: Energized, rayStart: RayStar
   return [energized, []];
 }
 
-export function rayTraceFromTopLeft(puzzle: Puzzle): Energized {
-  const raysToTrace: RayStart[] = [{
-    position: {
-      line: 0,
-      char: 0,
-    },
-    heading: "Right"
-  }];
+export function rayTraceFromStart(puzzle: Puzzle, rayStart: RayStart): Energized {
+  const raysToTrace: RayStart[] = [rayStart];
 
   let energized = createEnergized(puzzle);
 
@@ -123,8 +117,18 @@ export function rayTraceFromTopLeft(puzzle: Puzzle): Energized {
   return energized;
 }
 
-export function day16part1(input: string): number {
-  return rayTraceFromTopLeft(parseInput(input)).field
+export function rayTraceFromTopLeft(puzzle: Puzzle): Energized {
+  return rayTraceFromStart(puzzle, {
+    position: {
+      line: 0,
+      char: 0,
+    },
+    heading: "Right"
+  });
+}
+
+function countEnergized(energized: Energized): number {
+  return energized.field
     .map((l) =>
       l.reduce((prevNonEmpty, f) =>
         prevNonEmpty + (f.length === 0 ? 0 : 1),
@@ -132,4 +136,43 @@ export function day16part1(input: string): number {
       )
     )
     .reduce((a, b) => a + b, 0);
+}
+
+export function day16part1(input: string): number {
+  return countEnergized(rayTraceFromTopLeft(parseInput(input)));
+}
+
+export function day16part2(input: string): number {
+  const puzzle = parseInput(input);
+
+  return Math.max(...[
+    ...Array(puzzle.field.length).fill(undefined).map((_, lineNo) => ({
+      position: {
+        line: lineNo,
+        char: 0,
+      },
+      heading: "Right",
+    })) as RayStart[], // fromLeft
+    ...Array(puzzle.field.length).fill(undefined).map((_, lineNo) => ({
+      position: {
+        line: lineNo,
+        char: puzzle.field[0].length - 1,
+      },
+      heading: "Left",
+    })) as RayStart[], // fromRight
+    ...Array(puzzle.field[0].length).fill(undefined).map((_, charNo) => ({
+      position: {
+        line: 0,
+        char: charNo,
+      },
+      heading: "Down",
+    })) as RayStart[], // fromUp
+    ...Array(puzzle.field[0].length).fill(undefined).map((_, charNo) => ({
+      position: {
+        line: puzzle.field.length - 1,
+        char: charNo,
+      },
+      heading: "Up",
+    })) as RayStart[], // fromUp
+  ].map((rs) => countEnergized(rayTraceFromStart(puzzle, rs))));
 }
