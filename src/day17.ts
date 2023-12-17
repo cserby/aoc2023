@@ -55,21 +55,21 @@ function findHeatLosses(puzzle: Puzzle, start: Position): HeatLosses {
   interface State {
     pos: Position;
     heading: Heading;
-    stepsSoFar: number;
+    stepsLeft: number;
     heatLossSoFar: number;
   }
 
   const heatLosses = createHeatLosses(puzzle);
 
   const needToCalculate: State[] = [...neighbors(puzzle, start)]
-    .map(([pos, heading]) => ({ pos, heading, stepsSoFar: 1, heatLossSoFar: 0 }));
+    .map(([pos, heading]) => ({ pos, heading, stepsLeft: 2, heatLossSoFar: 0 }));
 
   while (needToCalculate.length > 0) {
     const currState = needToCalculate.pop()!;
 
     const currHeatLossSoFar = currState.heatLossSoFar + puzzle[currState.pos.line][currState.pos.char];
 
-    const currStepsLeft = 3 - currState.stepsSoFar;
+    const currStepsLeft = currState.stepsLeft;
 
     const [bestHeatLossValue, bestHeatLossDirection, bestHeatLossStepsLeft] =
       heatLosses[currState.pos.line][currState.pos.char];
@@ -82,21 +82,21 @@ function findHeatLosses(puzzle: Puzzle, start: Position): HeatLosses {
         .map(([pos, heading]) => ({
           pos,
           heading,
-          stepsSoFar: heading === currState.heading ? currState.stepsSoFar + 1 : 1,
+          stepsLeft: heading === currState.heading ? currState.stepsLeft - 1 : 2,
           heatLossSoFar: currHeatLossSoFar
         }))
-        .filter((st) => st.stepsSoFar <= 3);
+        .filter((st) => st.stepsLeft >= 0);
       
       needToCalculate.push(...nextStates);
-    } else if (
-      bestHeatLossDirection === currState.heading &&
-      currStepsLeft > 0 &&
-      bestHeatLossStepsLeft < currStepsLeft
+    } else if ( // bestHeatLossValue <= currHeatLossSoFar
+      bestHeatLossDirection === currState.heading && // if I'm heading the same direction
+      currStepsLeft > 0 && // I have steps left
+      bestHeatLossStepsLeft < currStepsLeft // previous min was reached with less steps remaining, than now
     ) {
       needToCalculate.push(...[...nextPos(puzzle, currState.pos, currState.heading)].map(([pos, _]) => ({
         pos,
         heading: currState.heading,
-        stepsSoFar: currState.stepsSoFar + 1,
+        stepsLeft: currState.stepsLeft - 1,
         heatLossSoFar: currHeatLossSoFar,
       })));
     } else {
