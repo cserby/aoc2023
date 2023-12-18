@@ -15,8 +15,14 @@ const sample = `2413432311323
 2546548887735
 4322674655533`;
 
+const sampleReduced = `24134\n32154`
+
 describe("Day17", () => {
   describe("Part1", () => {
+    test("Sample reduced", () => {
+      expect(day17part1(sampleReduced)).toEqual(11);
+    });
+
     test("Sample", () => {
       expect(day17part1(sample)).toEqual(102);
     });

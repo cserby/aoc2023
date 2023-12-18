@@ -66,7 +66,7 @@ function findHeatLosses(puzzle: Puzzle, start: Position): HeatLosses {
     .map(([pos, heading]) => ({ pos, heading, stepsLeft: 2, heatLossSoFar: 0, fromPoses: [{ line: 0, char: 0 }] }));
 
   while (needToCalculate.length > 0) {
-    const currState = needToCalculate.pop()!;
+    const currState = needToCalculate.pop()!; // need to select with min
 
     const currHeatLossSoFar = currState.heatLossSoFar + puzzle[currState.pos.line][currState.pos.char];
 
