@@ -7,7 +7,7 @@ interface Position {
 
 type Heading = "Up" | "Down" | "Left" | "Right";
 
-type HeatLosses = [number, Heading, number][][];
+type HeatLosses = [number, Heading | undefined, number, Position[]][][];
 
 function parseInput(input: string): Puzzle {
   return input.split("\n").map((l) => [...l].map((n) => parseInt(n)));
@@ -34,11 +34,11 @@ function* nextPos(puzzle: Puzzle, position: Position, heading: Heading): Generat
   }
 }
 
-function* neighbors(puzzle: Puzzle, position: Position): Generator<[Position, Heading], void, unknown> {
-  yield* nextPos(puzzle, position, "Up");
-  yield* nextPos(puzzle, position, "Down");
-  yield* nextPos(puzzle, position, "Left");
-  yield* nextPos(puzzle, position, "Right");
+function* neighbors(puzzle: Puzzle, position: Position, heading: Heading): Generator<[Position, Heading], void, unknown> {
+  if (heading !== "Down") yield* nextPos(puzzle, position, "Up");
+  if (heading !== "Up") yield* nextPos(puzzle, position, "Down");
+  if (heading !== "Right") yield* nextPos(puzzle, position, "Left");
+  if (heading !== "Left") yield* nextPos(puzzle, position, "Right");
 }
 
 function createHeatLosses(puzzle: Puzzle): HeatLosses {
@@ -47,7 +47,7 @@ function createHeatLosses(puzzle: Puzzle): HeatLosses {
     .map(() =>
       Array(puzzle[0].length)
         .fill(undefined)
-        .map(() => [Infinity, "Left", 0])
+        .map(() => [Infinity, undefined, 0, []])
     );
 }
 
@@ -57,47 +57,48 @@ function findHeatLosses(puzzle: Puzzle, start: Position): HeatLosses {
     heading: Heading;
     stepsLeft: number;
     heatLossSoFar: number;
+    fromPoses: Position[];
   }
 
   const heatLosses = createHeatLosses(puzzle);
 
-  const needToCalculate: State[] = [...neighbors(puzzle, start)]
-    .map(([pos, heading]) => ({ pos, heading, stepsLeft: 2, heatLossSoFar: 0 }));
+  const needToCalculate: State[] = [...neighbors(puzzle, start, "Right")]
+    .map(([pos, heading]) => ({ pos, heading, stepsLeft: 2, heatLossSoFar: 0, fromPoses: [{ line: 0, char: 0 }] }));
 
   while (needToCalculate.length > 0) {
     const currState = needToCalculate.pop()!;
 
     const currHeatLossSoFar = currState.heatLossSoFar + puzzle[currState.pos.line][currState.pos.char];
 
-    const currStepsLeft = currState.stepsLeft;
-
     const [bestHeatLossValue, bestHeatLossDirection, bestHeatLossStepsLeft] =
       heatLosses[currState.pos.line][currState.pos.char];
 
     if (bestHeatLossValue > currHeatLossSoFar) {
 
-      heatLosses[currState.pos.line][currState.pos.char] = [currHeatLossSoFar, currState.heading, currStepsLeft];
+      heatLosses[currState.pos.line][currState.pos.char] = [currHeatLossSoFar, currState.heading, currState.stepsLeft, [...currState.fromPoses, currState.pos]];
 
-      const nextStates = [...neighbors(puzzle, currState.pos)]
+      const nextStates = [...neighbors(puzzle, currState.pos, currState.heading)]
         .map(([pos, heading]) => ({
           pos,
           heading,
           stepsLeft: heading === currState.heading ? currState.stepsLeft - 1 : 2,
-          heatLossSoFar: currHeatLossSoFar
+          heatLossSoFar: currHeatLossSoFar,
+          fromPoses: [...currState.fromPoses, currState.pos],
         }))
         .filter((st) => st.stepsLeft >= 0);
       
       needToCalculate.push(...nextStates);
     } else if ( // bestHeatLossValue <= currHeatLossSoFar
       bestHeatLossDirection === currState.heading && // if I'm heading the same direction
-      currStepsLeft > 0 && // I have steps left
-      bestHeatLossStepsLeft < currStepsLeft // previous min was reached with less steps remaining, than now
+      currState.stepsLeft > 0 && // I have steps left
+      bestHeatLossStepsLeft < currState.stepsLeft // previous min was reached with less steps remaining, than now
     ) {
       needToCalculate.push(...[...nextPos(puzzle, currState.pos, currState.heading)].map(([pos, _]) => ({
         pos,
         heading: currState.heading,
         stepsLeft: currState.stepsLeft - 1,
         heatLossSoFar: currHeatLossSoFar,
+        fromPoses: [...currState.fromPoses, currState.pos]
       })));
     } else {
       continue;
