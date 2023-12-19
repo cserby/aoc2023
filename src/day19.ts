@@ -192,34 +192,50 @@ export function acceptedDomains(input: string): Domain[] {
   return domains["A"];
 }
 
-function calculateVolume(domains: Domain[]): number {
-  function calcVol(domArray: number[]): number {
-    const [x1, x2, m1, m2, a1, a2, s1, s2] = domArray;
+type DomArray = [number, number, number, number, number, number, number, number];
 
-    return (x2 - x1 - 1) * (m2 - m1 - 1) * (a2 - a1 - 1) * (s2 - s1 - 1);
-  }
-
-  const domArrays = domains.map((d) => [
+function toDomArray(d: Domain): DomArray {
+  return [
     d.x[">"], d.x["<"],
     d.m[">"], d.m["<"],
     d.a[">"], d.a["<"],
     d.s[">"], d.s["<"],
-  ]);
+  ];
+}
 
+function intersect(a: DomArray, b: DomArray): DomArray {
+  const [ax1, ax2, am1, am2, aa1, aa2, as1, as2] = a;
+  const [bx1, bx2, bm1, bm2, ba1, ba2, bs1, bs2] = b;
+
+  return [
+    Math.max(ax1, bx1), Math.min(ax2, bx2),
+    Math.max(am1, bm1), Math.min(am2, bm2),
+    Math.max(aa1, ba1), Math.min(aa2, ba2),
+    Math.max(as1, bs1), Math.min(as2, bs2),
+  ]
+}
+
+function calculateDomainVolume(domArray: DomArray): number {
+  const [x1, x2, m1, m2, a1, a2, s1, s2] = domArray;
+
+  return (x2 - x1 - 1) * (m2 - m1 - 1) * (a2 - a1 - 1) * (s2 - s1 - 1);
+}
+
+function calculateTotalVolume(domArrays: DomArray[]): number {
   let volume = 0;
 
   for (let i = 0; i < domArrays.length; i++) {
     const intersections = boxIntersect(
       domArrays.slice(i + 1),
       [domArrays[i]]
-    ); // Gives the indexes of pairs, need to calculate intersections, then intersections between those, then...
+    ).map(([indexA, indexB]) => intersect(domArrays[indexA], domArrays[indexB]));
 
-    volume += calcVol(domArrays[i]) - intersections.map(calcVol).reduce((a, b) => a + b, 0);
+    volume += calculateDomainVolume(domArrays[i]) - calculateTotalVolume(intersections);
   }
 
   return volume;
 }
 
 export function day19part2(input: string): number {
-  return calculateVolume(acceptedDomains(input));
+  return calculateTotalVolume(acceptedDomains(input).map(toDomArray));
 }
