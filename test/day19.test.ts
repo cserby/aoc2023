@@ -55,7 +55,7 @@ describe("Day19", () => {
     });
 
     test("Real", () => {
-      expect(day19part2(readFileSync("inputs/day19.txt", { encoding: "utf-8" }))).toEqual(-1);
+      expect(day19part2(readFileSync("inputs/day19.txt", { encoding: "utf-8" }))).toEqual(131899818301477);
     });
   });
 });

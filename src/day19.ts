@@ -1,5 +1,3 @@
-import boxIntersect from "box-intersect";
-
 type PartAttr = "x" | "m" | "a" | "s";
 
 export type Part = Record<PartAttr, number>;
@@ -169,6 +167,8 @@ export function acceptedDomains(input: string): Domain[] {
     "s": { ">": 0, "<": 4001 },
   }]];
 
+  const beenThereDoneThat: string[] = [];
+
   while (evaluate.length > 0) {
     const [workflowLabel, domain] = evaluate.pop()!;
 
@@ -184,7 +184,13 @@ export function acceptedDomains(input: string): Domain[] {
         throw new Error("???");
       }
       const [newLabel, newDomain, remDmn] = apply2(remainderDomain, rule);
-      evaluate.push([newLabel, newDomain]);
+
+      const stateStr = `${newLabel};${JSON.stringify(newDomain)}`;
+      if (!beenThereDoneThat.includes(stateStr)) {
+        evaluate.push([newLabel, newDomain]);
+        beenThereDoneThat.push(stateStr);
+      }
+
       remainderDomain = remDmn;
     }
   }
@@ -205,16 +211,27 @@ function toDomArray(d: Domain): DomArray {
   ];
 }
 
-function intersect(a: DomArray, b: DomArray): DomArray {
+function intersect(a: DomArray, b: DomArray): DomArray | undefined {
+  // Closed ranges
   const [ax1, ax2, am1, am2, aa1, aa2, as1, as2] = a;
   const [bx1, bx2, bm1, bm2, ba1, ba2, bs1, bs2] = b;
 
-  return [
-    Math.max(ax1, bx1), Math.min(ax2, bx2),
-    Math.max(am1, bm1), Math.min(am2, bm2),
-    Math.max(aa1, ba1), Math.min(aa2, ba2),
-    Math.max(as1, bs1), Math.min(as2, bs2),
-  ]
+  if ( // [z, y] does not intersect [q, p] if z > p || y < q
+    ax1 > bx2 || ax2 < bx1 ||//no intersection in x
+    am1 > bm2 || am2 < bm1 ||
+    aa1 > ba2 || aa2 < ba1 ||
+    as1 > bs2 || as2 < bs1
+  ) {
+    // No intersection
+    return;
+  } else {
+    return [
+      Math.max(ax1, bx1), Math.min(ax2, bx2),
+      Math.max(am1, bm1), Math.min(am2, bm2),
+      Math.max(aa1, ba1), Math.min(aa2, ba2),
+      Math.max(as1, bs1), Math.min(as2, bs2),
+    ]
+  }
 }
 
 function calculateDomainVolume(domArray: DomArray): number {
@@ -224,11 +241,40 @@ function calculateDomainVolume(domArray: DomArray): number {
   return (x2 - x1 + 1) * (m2 - m1 + 1) * (a2 - a1 + 1) * (s2 - s1 + 1);
 }
 
+function allIntersections(domArrays: DomArray[]): DomArray[] {
+  const ret: DomArray[] = [];
+
+  for (let i = 0; i < domArrays.length - 1; i++) {
+    for (let j = i + 1; j < domArrays.length; j++) {
+      const intrs = intersect(domArrays[i], domArrays[j]);
+      if (intrs !== undefined) {
+        ret.push(intrs);
+      }
+    }
+  }
+
+  return ret;
+}
+
 function calculateTotalVolume(domArrays: DomArray[]): number {
   if (domArrays.length === 0) return 0;
 
-  const intersections = boxIntersect(domArrays)
-    .map(([indexA, indexB]) => intersect(domArrays[indexA], domArrays[indexB]));
+  let volume = domArrays.map(calculateDomainVolume).reduce((a, b) => a + b, 0);
+
+  let sign = -1;
+
+  let intersections = deepcopy(domArrays);
+
+  while(true) {
+    intersections = deepcopy(allIntersections(intersections));
+    
+    if (intersections.length === 0) break;
+    
+    const intersectionVol = intersections.map(calculateDomainVolume).reduce((a, b) => a + b, 0);
+
+    volume += sign * intersectionVol;
+    sign *= -1;
+  }
 
   return domArrays.map(calculateDomainVolume).reduce((a, b) => a + b, 0) - calculateTotalVolume(intersections);
 }
