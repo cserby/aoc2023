@@ -2,7 +2,7 @@ import boxIntersect from "box-intersect";
 
 type PartAttr = "x" | "m" | "a" | "s";
 
-type Part = Record<PartAttr, number>;
+export type Part = Record<PartAttr, number>;
 
 type Rule = (p: Part) => string | undefined
 
@@ -128,25 +128,68 @@ export function parseInput2(input: string): Puzzle2 {
     }, {} as Record<string, Workflow2>);
 }
 
-type Domain = Record<PartAttr, { "<": number; ">": number }>;
+export type Domain = Record<PartAttr, { "<": number; ">": number }>;
 
-export function apply2(domain: Domain, rule: Rule2): [string, Domain] {
+export function apply2(domain: Domain, rule: Rule2): [string, Domain, Domain | undefined] {
   if (rule.comp === undefined) {
-    return [rule.target, domain];
+    return [rule.target, deepcopy(domain), undefined];
   } else {
-    const newDomain = domain;
+    const newDomain = deepcopy(domain);
+    const remainder = deepcopy(domain);
+
     switch (rule.comp) {
       case "<": {
-        newDomain[rule.partAttr!][rule.comp] = Math.min(newDomain[rule.partAttr!][rule.comp], rule.numb!);
+        newDomain[rule.partAttr!]["<"] = Math.min(newDomain[rule.partAttr!]["<"], rule.numb!);
+        remainder[rule.partAttr!][">"] = Math.max(domain[rule.partAttr!][">"], rule.numb! - 1);
         break;
       }
       case ">": {
-        newDomain[rule.partAttr!][rule.comp] = Math.max(newDomain[rule.partAttr!][rule.comp], rule.numb!);
+        newDomain[rule.partAttr!][">"] = Math.max(newDomain[rule.partAttr!][">"], rule.numb!);
+        remainder[rule.partAttr!]["<"] = Math.min(domain[rule.partAttr!]["<"], rule.numb! + 1);
         break;
       }
     }
-    return [rule.target, newDomain];
+    return [rule.target, newDomain, remainder];
   }
+}
+
+function deepcopy<T>(a: T): T {
+  return JSON.parse(JSON.stringify(a)) as T;
+}
+
+export function acceptedDomains(input: string): Domain[] {
+  const puzzle = parseInput2(input);
+
+  const domains: Record<string, Domain[]> = {};
+
+  let evaluate: [string, Domain][] = [["in", {
+    "x": { ">": 0, "<": 4001 },
+    "m": { ">": 0, "<": 4001 },
+    "a": { ">": 0, "<": 4001 },
+    "s": { ">": 0, "<": 4001 },
+  }]];
+
+  while (evaluate.length > 0) {
+    const [workflowLabel, domain] = evaluate.pop()!;
+
+    domains[workflowLabel] = [...(domains[workflowLabel] ?? []), deepcopy(domain)];
+
+    if (workflowLabel === "A" || workflowLabel === "R") {
+      continue;
+    }
+
+    let remainderDomain: Domain | undefined = deepcopy(domain);
+    for (const rule of puzzle[workflowLabel]) {
+      if (remainderDomain === undefined) {
+        throw new Error("???");
+      }
+      const [newLabel, newDomain, remDmn] = apply2(remainderDomain, rule);
+      evaluate.push([newLabel, newDomain]);
+      remainderDomain = remDmn;
+    }
+  }
+
+  return domains["A"];
 }
 
 function calculateVolume(domains: Domain[]): number {
@@ -163,37 +206,20 @@ function calculateVolume(domains: Domain[]): number {
     d.s[">"], d.s["<"],
   ]);
 
-  const intersections = boxIntersect(domArrays);
+  let volume = 0;
 
-  return domArrays.map(calcVol).reduce((a, b) => a + b, 0) -
-    intersections.map(calcVol).reduce((a, b) => a + b, 0);
+  for (let i = 0; i < domArrays.length; i++) {
+    const intersections = boxIntersect(
+      domArrays.slice(i + 1),
+      [domArrays[i]]
+    ); // Gives the indexes of pairs, need to calculate intersections, then intersections between those, then...
+
+    volume += calcVol(domArrays[i]) - intersections.map(calcVol).reduce((a, b) => a + b, 0);
+  }
+
+  return volume;
 }
 
 export function day19part2(input: string): number {
-  const puzzle = parseInput2(input);
-
-  const domains: Record<string, Domain[]> = {};
-
-  let evaluate: [string, Domain][] = [["in", {
-    "x": { ">": 0, "<": 4001 },
-    "m": { ">": 0, "<": 4001 },
-    "a": { ">": 0, "<": 4001 },
-    "s": { ">": 0, "<": 4001 },
-  }]];
-
-  while (evaluate.length > 0) {
-    const [workflowLabel, domain] = evaluate.pop()!;
-
-    domains[workflowLabel] = [...(domains[workflowLabel] ?? []), domain];
-
-    if (workflowLabel === "A" || workflowLabel === "R") {
-      continue;
-    }
-
-    for (const rule of puzzle[workflowLabel]) {
-      evaluate.push(apply2(domain, rule));
-    }
-  }
-
-  return calculateVolume(domains["A"]);
+  return calculateVolume(acceptedDomains(input));
 }
