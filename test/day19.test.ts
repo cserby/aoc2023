@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { day19part1, day19part2 } from "../src/day19";
+import { Domain, Part, acceptedDomains, day19part1, day19part2 } from "../src/day19";
 
 const sample = `px{a<2006:qkq,m>2090:A,rfg}
 pv{a>1716:R,A}
@@ -31,6 +31,25 @@ describe("Day19", () => {
   });
 
   describe("Part2", () => {
+    test("Apply2", () => {
+      const acceptedInPart1 = [{ "x": 787, "m": 2655, "a": 1222, "s": 2876 }, { "x": 2036, "m": 264, "a": 79, "s": 2244 }, { "x": 2127, "m": 1623, "a": 2188, "s": 1013 }];
+      const acceptedDomains2 = acceptedDomains(sample);
+
+      const inDomain = (p: Part, d: Domain) =>
+        p.x < d.x["<"] &&
+        p.x > d.x[">"] &&
+        p.m < d.m["<"] &&
+        p.m > d.m[">"] &&
+        p.a < d.a["<"] &&
+        p.a > d.a[">"] &&
+        p.s < d.s["<"] &&
+        p.s > d.s[">"];
+      
+      expect(acceptedDomains2.filter((d) => inDomain(acceptedInPart1[0], d))).toBeDefined();
+      expect(acceptedDomains2.filter((d) => inDomain(acceptedInPart1[1], d))).toBeDefined();
+      expect(acceptedDomains2.filter((d) => inDomain(acceptedInPart1[2], d))).toBeDefined();
+    });
+
     test("Sample", () => {
       expect(day19part2(sample)).toEqual(167409079868000);
     });
