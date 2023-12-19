@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { day19part1 } from "../src/day19";
+import { day19part1, day19part2 } from "../src/day19";
 
 const sample = `px{a<2006:qkq,m>2090:A,rfg}
 pv{a>1716:R,A}
@@ -27,6 +27,12 @@ describe("Day19", () => {
 
     test("Real", () => {
       expect(day19part1(readFileSync("inputs/day19.txt", { encoding: "utf-8" }))).toEqual(456651);
+    });
+  });
+
+  describe("Part2", () => {
+    test("Sample", () => {
+      expect(day19part2(sample)).toEqual(167409079868000);
     });
   });
 });
