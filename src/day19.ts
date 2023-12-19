@@ -195,11 +195,13 @@ export function acceptedDomains(input: string): Domain[] {
 type DomArray = [number, number, number, number, number, number, number, number];
 
 function toDomArray(d: Domain): DomArray {
+  // box-intersect works with closed ranges
+  // Domain describes an open range, so need to convert here
   return [
-    d.x[">"], d.x["<"],
-    d.m[">"], d.m["<"],
-    d.a[">"], d.a["<"],
-    d.s[">"], d.s["<"],
+    d.x[">"] + 1, d.x["<"] - 1, // (0, 4001) => [1, 4000]
+    d.m[">"] + 1, d.m["<"] - 1,
+    d.a[">"] + 1, d.a["<"] - 1,
+    d.s[">"] + 1, d.s["<"] - 1,
   ];
 }
 
@@ -218,22 +220,17 @@ function intersect(a: DomArray, b: DomArray): DomArray {
 function calculateDomainVolume(domArray: DomArray): number {
   const [x1, x2, m1, m2, a1, a2, s1, s2] = domArray;
 
-  return (x2 - x1 - 1) * (m2 - m1 - 1) * (a2 - a1 - 1) * (s2 - s1 - 1);
+  // closed ranges: [1, 4000] => 4000 - 1 + 1
+  return (x2 - x1 + 1) * (m2 - m1 + 1) * (a2 - a1 + 1) * (s2 - s1 + 1);
 }
 
 function calculateTotalVolume(domArrays: DomArray[]): number {
-  let volume = 0;
+  if (domArrays.length === 0) return 0;
 
-  for (let i = 0; i < domArrays.length; i++) {
-    const intersections = boxIntersect(
-      domArrays.slice(i + 1),
-      [domArrays[i]]
-    ).map(([indexA, indexB]) => intersect(domArrays[indexA], domArrays[indexB]));
+  const intersections = boxIntersect(domArrays)
+    .map(([indexA, indexB]) => intersect(domArrays[indexA], domArrays[indexB]));
 
-    volume += calculateDomainVolume(domArrays[i]) - calculateTotalVolume(intersections);
-  }
-
-  return volume;
+  return domArrays.map(calculateDomainVolume).reduce((a, b) => a + b, 0) - calculateTotalVolume(intersections);
 }
 
 export function day19part2(input: string): number {
