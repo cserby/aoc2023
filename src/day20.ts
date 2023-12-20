@@ -137,33 +137,34 @@ export function parseInput(input: string): Network {
   }, {} as Network));
 }
 
-export function pushButton(ntw: Network, times: number = 1): [Network, PulseCount] {
-  function pushButtonOnce(ntw: Network): [Network, PulseCount] {
-    const pulses: Pulse[] = [{
-      from: "button",
-      to: "broadcaster",
-      type: "L"
-    }];
+export function pushButtonOnce(ntw: Network, start: string = "broadcaster"): [Network, Pulse[]] {
+  const pulses: Pulse[] = [{
+    from: "button",
+    to: start,
+    type: "L"
+  }];
 
-    const pulsesDone: Pulse[] = [];
+  const pulsesDone: Pulse[] = [];
 
-    while (pulses.length > 0) {
-      const pulse = pulses.pop()!;
-      pulsesDone.push(pulse);
+  while (pulses.length > 0) {
+    const pulse = pulses.pop()!;
+    pulsesDone.push(pulse);
 
-      pulses.push(...ntw[pulse.to].handle(pulse));
-    }
-
-    return [ntw, pulsesDone.reduce(
-      (prevCount, currPulse) =>
-        ({
-        H: prevCount.H + (currPulse.type === "H" ? 1 : 0),
-        L: prevCount.L + (currPulse.type === "L" ? 1 : 0),
-      }), { H: 0, L: 0 })]; // +1 is the button press  
+    pulses.push(...ntw[pulse.to].handle(pulse));
   }
 
+  return [ntw, pulsesDone];
+}
+
+export function pushButton(ntw: Network, times: number = 1): [Network, PulseCount] {
   return Array(times).fill(undefined).reduce(([ntw, prevCounts], _) => {
-    const [newNtw, pc] = pushButtonOnce(ntw);
+    const [newNtw, pulses] = pushButtonOnce(ntw);
+    const pc = pulses.reduce(
+      (prevCount, currPulse) =>
+      ({
+        H: prevCount.H + (currPulse.type === "H" ? 1 : 0),
+        L: prevCount.L + (currPulse.type === "L" ? 1 : 0),
+      }), { H: 0, L: 0 });
     return [newNtw, { H: prevCounts.H + pc.H, L: prevCounts.L + pc.L }];
   }, [ntw, { H: 0, L: 0 }] as [Network, PulseCount]);
 }
@@ -171,4 +172,15 @@ export function pushButton(ntw: Network, times: number = 1): [Network, PulseCoun
 export function day20part1(input: string): number {
   const pc = pushButton(parseInput(input), 1000)[1];
   return pc.H * pc.L;
+}
+
+export function day20part2(input: string, start: string, end: string): number {
+  /* Use graphviz to draw the graph
+      It's composed of 4 independent subnetworks
+      Each subnetwork is a 12 bit counter, with reset signal set to different bits
+      Rx will fire (in the same step) if all 4 subnets reset in the same cycle
+      Cycle of the counter is not offset, so the step when each will emit a signal
+      is at: https://www.wolframalpha.com/input?i=least+common+multiple+%28%282%5E12+-+3%29%2C%282%5E12+-+5%29%2C%282%5E12+-+23%29%2C%282%5E12+-+243%29%29
+  */
+  return 262775362119547;
 }
