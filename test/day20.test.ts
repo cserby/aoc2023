@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
-import { day20part1, parseInput, pushButton } from "../src/day20";
+import { day20part1, day20part2, parseInput, pushButton, pushButtonOnce } from "../src/day20";
+import { error } from "console";
 
 const sample1 = `broadcaster -> a, b, c
 %a -> b
@@ -65,6 +66,25 @@ describe("Day20", () => {
 
     test("Real", () => {
       expect(day20part1(readFileSync("inputs/day20.txt", { encoding: "utf-8" }))).toEqual(670984704);
+    });
+  });
+
+  describe("Part2", () => {
+    test("Reset 0 1", () => {
+      let nw = parseInput(`broadcaster -> a
+%a -> b, conj
+%b -> c, conj
+%c -> d, conj
+%d -> e, conj
+&conj -> a, b`);
+      for (let i = 0; i < 100; i++) {
+        nw = pushButtonOnce(nw)[0];
+        error(`${i.toString().padStart(4, "0")}: ${Number((nw["d"] as unknown as Record<string, boolean>).state)} ${Number((nw["c"] as unknown as Record<string, boolean>).state)} ${Number((nw["b"] as unknown as Record<string, boolean>).state)} ${Number((nw["a"] as unknown as Record<string, boolean>).state)}`);
+      }
+    });
+
+    test("Real", () => {
+      expect(day20part2("whatever", "wherever", "whereverelse")).toEqual(262775362119547);
     });
   });
 });
