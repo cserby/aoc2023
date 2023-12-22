@@ -121,3 +121,47 @@ function removableCount(bricks: Brick[]): number {
 export function day22part1(input: string): number {
   return removableCount(drop(parseInput(input)));
 }
+
+function howManyWouldDropIfRemoved(startIndex: number, bricks: Brick[]): number {
+  const todo = [startIndex];
+  const wouldFall: number[] = [];
+
+  while (todo.length > 0) {
+    const currIndex = todo.pop()!;
+
+    for (let i = currIndex; i < bricks.length; i++) {
+      const currIndexIndex = bricks[i].supportedBy.findIndex((x) => x === currIndex);
+      if (currIndexIndex === -1) {
+        continue;
+      } else {
+        bricks[i].supportedBy.splice(currIndexIndex, 1);
+        if (bricks[i].supportedBy.length === 0) {
+          todo.push(i);
+          if (!wouldFall.includes(i)) {
+            wouldFall.push(i);
+          }
+        }
+      }
+    }
+
+  }
+
+  return wouldFall.length;
+}
+
+function howManyWouldDrop(bricks: Brick[]): number[] {
+  return Array(bricks.length)
+    .fill(undefined)
+    .map((_, i) => i)
+    .filter((index) => {
+      return bricks.find((b) => b.supportedBy.length === 1 && b.supportedBy[0] === index) !== undefined;
+    }) // Blocks that cause a drop
+    .map((index) => {
+      // how many depend on this?
+      return howManyWouldDropIfRemoved(index, JSON.parse(JSON.stringify(bricks)));
+    });
+}
+
+export function day22part2(input: string): number {
+  return howManyWouldDrop(drop(parseInput(input))).reduce((a, b) => a + b);
+}
