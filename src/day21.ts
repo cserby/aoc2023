@@ -30,21 +30,6 @@ export function neighborFields(pos: Position, puzzle: Puzzle): Position[] {
   return neighborFields.filter((p) => puzzle.fields[p.line][p.char] !== "#");
 }
 
-export function canGoTo(from: Position, puzzle: Puzzle, steps: number): string[] {
-  if (steps === 0) {
-    return [JSON.stringify(from)];
-  } else {
-    return neighborFields(from, puzzle).map((n) => canGoTo(n, puzzle, steps - 1)).reduce((prevSet, currSet) => {
-      for (const posStr of currSet) {
-        if (!prevSet.includes(posStr)) {
-          prevSet.push(posStr);
-        }
-      }
-      return prevSet;
-    }, []);
-  }
-}
-
 export function day21part1(input: string, steps: number = 64): number {
   const puzzle = parseInput(input);
   
@@ -52,6 +37,29 @@ export function day21part1(input: string, steps: number = 64): number {
 
   for (let i = 0; i < steps; i++) {
     cgt = [...new Set(cgt.flatMap((p) => neighborFields(JSON.parse(p), puzzle).map((nf) => JSON.stringify(nf))))];
+  }
+
+  return cgt.length;
+}
+
+export function neighborFields2(pos: Position, puzzle: Puzzle): Position[] {
+  const neighborFields = [];
+  neighborFields.push({ line: pos.line - 1, char: pos.char });
+  neighborFields.push({ line: pos.line, char: pos.char - 1});
+  neighborFields.push({ line: pos.line + 1, char: pos.char });
+  neighborFields.push({ line: pos.line, char: pos.char + 1 });
+  return neighborFields
+    .filter((p) =>
+      puzzle.fields[(p.line + (p.line < 0 ? (Math.abs(Math.floor(p.line / puzzle.fields.length)) * puzzle.fields.length) : 0)) % puzzle.fields.length][(p.char + (p.char < 0 ? (Math.abs(Math.floor(p.char / puzzle.fields[0].length)) * puzzle.fields[0].length) : 0)) % puzzle.fields[0].length] !== "#");
+}
+
+export function day21part2(input: string, steps: number = 26501365): number {
+  const puzzle = parseInput(input);
+  
+  let cgt = [JSON.stringify(puzzle.start)];
+
+  for (let i = 0; i < steps; i++) {
+    cgt = [...new Set(cgt.flatMap((p) => neighborFields2(JSON.parse(p), puzzle).map((nf) => JSON.stringify(nf))))];
   }
 
   return cgt.length;
