@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { day23part1 } from "../src/day23";
+import { day23part1, day23part2 } from "../src/day23";
 
 const sample = `#.#####################
 #.......#########...###
@@ -37,4 +37,15 @@ describe("Day23", () => {
       expect(day23part1(real)).toEqual(2250);
     });
   });
+
+  /*describe("Part2", () => {
+    test("Sample", () => {
+      expect(day23part2(sample)).toEqual(154);
+    });
+
+    test("Real", () => {
+      expect(day23part2(real)).toEqual(-1);
+    });
+  });
+  */
 });
