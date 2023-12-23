@@ -38,7 +38,7 @@ describe("Day23", () => {
     });
   });
 
-  /*describe("Part2", () => {
+  describe("Part2", () => {
     test("Sample", () => {
       expect(day23part2(sample)).toEqual(154);
     });
@@ -47,5 +47,4 @@ describe("Day23", () => {
       expect(day23part2(real)).toEqual(-1);
     });
   });
-  */
 });
