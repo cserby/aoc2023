@@ -44,7 +44,7 @@ describe("Day23", () => {
     });
 
     test("Real", () => {
-      expect(day23part2(real)).toEqual(-1);
+      expect(day23part2(real)).toEqual(6470);
     });
   });
 });
