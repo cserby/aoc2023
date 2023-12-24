@@ -1,3 +1,5 @@
+import { error } from "console";
+
 interface Hailstone {
   px: number;
   py: number;
@@ -67,4 +69,34 @@ export function day24part1(input: string, test: [number, number] = [200000000000
   }
 
   return count;
+}
+
+export function day24part2(input: string): string {
+  // My position + velocity -> 6 unknowns
+
+  // My trajectory collides with hailstone 1 at t_1 -> 7 unknowns, 3 equations
+  // my_p + t_1 * my_v = hs_p + t_1 * hs_v
+
+  // My trajectory collides with hailstone 2 at t_2 -> 8 unknowns, 6 equations
+  // my_p + t_2 * my_v = hs_p + t_2 * hs_v
+
+  // My trajectory collides with hailstone 3 at t_3 -> 9 unknowns, 9 equations
+  // my_p + t_3 * my_v = hs_p + t_3 * hs_v
+
+  // -> solvable!
+
+  const hlstns = parseInput(input);
+  const sageScript = ["var('my_px my_py my_pz my_vx my_vy my_vz t0 t1 t2 ans')"];
+  for (let i = 0; i < 3; i++) {
+    sageScript.push(`eq${3*i + 0} = my_px + t${i} * my_vx == ${hlstns[i].px} + t${i} * ${hlstns[i].vx}`);
+    sageScript.push(`eq${3*i + 1} = my_py + t${i} * my_vy == ${hlstns[i].py} + t${i} * ${hlstns[i].vy}`);
+    sageScript.push(`eq${3*i + 2} = my_pz + t${i} * my_vz == ${hlstns[i].pz} + t${i} * ${hlstns[i].vz}`);
+  }
+
+  sageScript.push("eq9 = ans == my_px + my_py + my_pz");
+  sageScript.push("print(solve([eq0,eq1,eq2,eq3,eq4,eq5,eq6,eq7,eq8,eq9],my_px,my_py,my_pz,my_vx,my_vy,my_vz,t0,t1,t2,ans))")
+
+  return sageScript.join("\n");
+
+  // Plop the script into https://cocalc.com/features/sage
 }
